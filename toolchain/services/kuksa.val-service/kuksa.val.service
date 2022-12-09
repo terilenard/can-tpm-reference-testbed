@@ -1,0 +1,13 @@
+[Unit]
+Description=Kuksa.val Service
+After=systemd-networkd
+Requires=systemd-networkd
+
+[Service]
+User=pi
+Group=pi
+Type=simple
+ExecStart=/usr/bin/kuksa.val/kuksa-val-server -c /etc/kuksa.val/config.ini
+
+[Install]
+WantedBy=multi-user.target 
