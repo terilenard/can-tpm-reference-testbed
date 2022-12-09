@@ -1,4 +1,4 @@
-# DIAS Hackathon Testbed-1
+# A Controller Area Network TestBed
 
 This project contains the source code, and the resources necesary to configure the a Controller Area Network Reference TestBed with Trusted Platform Modules.
 
