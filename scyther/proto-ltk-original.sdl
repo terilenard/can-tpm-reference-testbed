@@ -1,0 +1,22 @@
+usertype ProtocolID;
+usertype KeyID;
+usertype SessionKey;
+const pid: ProtocolID;
+protocol DIAS-KEYDISTRO(I,R) {
+	role I {
+		fresh kid: KeyID;
+		fresh Ni: Nonce;
+		fresh K: SessionKey;
+		send_1(I,R, pid, kid, Ni, {K}pk(R),
+{pid, kid, Ni, {K}pk(R)}sk(I));
+	}
+	role R {
+		var kid: KeyID;
+		var Ni: Nonce;
+		var K: SessionKey;
+		recv_1(I,R, pid, kid, Ni, {K}pk(R),
+{pid, kid, Ni, {K}pk(R)}sk(I));
+		claim_R1(R,Secret,K);
+		claim_R2(R,Nisynch);
+	}
+}

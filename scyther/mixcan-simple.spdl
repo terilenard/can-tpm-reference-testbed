@@ -1,0 +1,49 @@
+/* 
+ * MixCAN Authentication protocol
+ */
+
+usertype FrameSet;  // Set of frames
+usertype ProtocolId;
+hashfunction Hash;  // Generic hash function to represent EBF
+
+
+
+protocol MixCAN(I,R) {
+
+    role I {
+
+        fresh sentFrames: FrameSet;
+        fresh sentCounter: Nonce;
+        fresh id: ProtocolId;
+        var recvCounter: Nonce;
+
+        send_0(I, R, sentFrames);
+        send_1(I, R, Hash(sentFrames, sentCounter), {Hash(sentFrames, sentCounter, id)}k(I, R));
+        recv_2(R, I, {recvCounter, id}k(R, I));
+
+
+        claim_I1(I, Secret, sentCounter);
+        claim_I2(I, Niagree);
+        claim_I3(I, Nisynch);
+        claim_I4(I, Alive);
+        claim_I5(I, Weakagree);
+    }
+
+    role R {
+        var recvFrames: FrameSet;
+        var recvCounter: Nonce;
+        var id: ProtocolId;
+        fresh incrmntNonce: Nonce;
+
+        recv_0(I, R, recvFrames);
+        recv_1(I, R, Hash(recvFrames, recvCounter), {Hash(recvFrames, recvCounter, id)}k(I, R));
+        send_2(R, I, {incrmntNonce, id}k(R, I));
+
+        claim_R1(R, Secret, recvCounter);
+        claim_R2(R, Niagree);
+        claim_R3(R, Nisynch);
+        claim_R4(R, Alive);
+        claim_R5(R, Weakagree);
+
+    }
+}

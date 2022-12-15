@@ -1,0 +1,33 @@
+usertype SessionKey;
+usertype CanID;
+usertype GroupID;
+const cid: CanID;
+const g: GroupID;
+hashfunction MAC;
+
+protocol DIAS-LOKI(I, R1, R2) {
+    role I {
+        fresh kig: SessionKey;
+        fresh freshness: Nonce;
+        send_1(I, R1, MAC(k(I,R1), kig, freshness, cid, g));
+        send_2(I, R2, MAC(k(I,R2), kig, freshness, cid, g));
+    }
+
+    role R1 {
+        var kig: SessionKey;
+        var freshness: Nonce;
+        recv_1(I, R1, MAC(k(I,R1), kig, freshness, cid, g));
+        claim_R1(R1, Secret, kig);
+        claim_R2(R1, Nisynch);
+        claim_R3(R1, Secret, k(I, R1));
+    }
+
+    role R2 {
+        var kig: SessionKey;
+        var freshness: Nonce;
+        recv_2(I, R2, MAC(k(I,R2), kig, freshness, cid, g));
+        claim_R1(R2, Secret, kig);
+        claim_R2(R2, Nisynch);
+        claim_R3(R2, Secret, k(I, R2));
+    }
+}

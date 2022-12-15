@@ -1,0 +1,35 @@
+/* 
+ * Proto-STK 
+ * Exchange short term symmetric keys between multiple nodes
+ * over bus communication using the Proto-LTK keys.
+ */
+
+usertype ProtocolID;
+usertype KeyID;
+usertype SessionKey;
+const pid: ProtocolID;
+hashfunction H;
+
+protocol Proto-STK(I,R) {
+    role I {
+        fresh kid: KeyID;
+        fresh Ni: Nonce;
+        fresh K: SessionKey;
+        var Nr: Nonce;
+
+        send_1(I,R, {pid, kid, Ni, K}k(R, I),
+               {{pid, kid, Ni, K}k(R, I)}sk(I));
+        recv_2(R, I, {H(pid, Nr, K)}K(I, R));
+}
+
+    role R {
+        var kid: KeyID;
+        var Ni: Nonce;
+        var K: SessionKey;
+        fresh Nr: Nonce;
+
+        recv_1(I,R, {pid, kid, Ni, K}k(R, I),
+        {{pid, kid, Ni, K}k(R, I)}sk(I));
+        send_2(R, I, {H(pid, Nr, K)}K(I, R));
+    }
+}

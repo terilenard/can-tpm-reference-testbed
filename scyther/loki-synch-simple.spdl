@@ -1,0 +1,43 @@
+/* 
+ * Testbed Service Communication Protocol
+ */
+
+// The protocol description
+
+
+usertype SessionKey;
+usertype CanID;
+usertype GroupID;
+const cid: CanID;
+const g: GroupID;
+hashfunction MAC;
+
+protocol DIAS-LOKI-SYNC(I, R) {
+
+    role I {
+        var kig: SessionKey;
+        fresh freshness: Nonce;
+        fresh n: Nonce;
+        var ninc: Nonce;
+        send_1(I, R, n, MAC(k(I, R), n, freshness, cid, g));
+        recv_2(R, I, {kig}k(I, R), MAC(k(I, R), {kig}k(I, R),
+        ninc, freshness, cid, g));
+        claim_I1(I, Secret, k(I, R));
+        claim_I2(I, Secret, kig);
+        claim_I3(I, Nisynch);
+    }
+
+    role R {
+        fresh kig: SessionKey;
+        var freshness: Nonce;
+        fresh ninc: Nonce;
+        var n: Nonce;
+        recv_1(I, R, n, MAC(k(I, R), n, freshness, cid, g));
+        send_2(R, I, {kig}k(I, R), MAC(k(I, R), {kig}k(I, R),
+        ninc, freshness, cid, g));
+        claim_R1(R, Secret, k(I, R));
+        claim_R2(R, Secret, kig);
+        claim_R3(R, Nisynch);
+    }
+}
+

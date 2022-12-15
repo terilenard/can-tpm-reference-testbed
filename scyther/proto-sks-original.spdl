@@ -1,0 +1,38 @@
+/* 
+ * Proto-LTK Challenge-Response Synchronization
+ */
+
+usertype ProtocolID;
+usertype KeyID;
+usertype SessionKey;
+usertype ProtocolType;
+hashfunction H;
+
+
+protocol Proto-STK-Synch(I,R) {
+    role I {
+        var kid: KeyID;
+        fresh pid: ProtocolID;
+        fresh N: Nonce;
+        var Ninc: Nonce;
+        var K: SessionKey;
+
+        send_1(I, R, pid, N);
+
+        recv_2(R, I, pid, kid, Ninc, {K}pk(R), 
+                    {pid, kid, Ninc, {K}pk(R)}sk(I));
+}
+
+    role R {
+        fresh kid: KeyID;
+        var pid: ProtocolID;
+        var N: Nonce;
+        fresh Ninc: Nonce;
+        fresh K: SessionKey;
+
+        recv_1(I, R, pid, N);
+
+        send_2(R, I, pid, kid, Ninc, {K}pk(R), 
+                    {pid, kid, Ninc, {K}pk(R)}sk(I));
+    }
+}

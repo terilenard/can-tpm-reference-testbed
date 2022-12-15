@@ -1,0 +1,216 @@
+/* 
+ * Proto-LTK 
+ * Exchange long term keys between multiple nodes
+ * over bus communication.
+ */
+
+usertype ProtocolID;
+usertype KeyID;
+usertype SessionKey;
+hashfunction H;
+usertype ProtocolType;
+usertype FrameSet;  // Set of frames
+usertype ProtocolId;
+hashfunction EBF;  // Generic hash function to represent EBF
+usertype MessageID;
+
+protocol Proto-LTK(I,R) {
+    role I {
+        fresh kid: KeyID;
+        fresh Ni: Nonce;
+        fresh K: SessionKey;
+        fresh piid: ProtocolID;
+        fresh mid: MessageID;
+
+
+        send_1(I,R, piid, mid, {mid, piid, kid, Ni, K}pk(R),
+                    {{mid, piid, kid, Ni, K}pk(R)}sk(I));
+        recv_2(R, I, piid, mid, {mid, piid, Ni}K(I, R));
+
+
+        claim_I1(I, Secret, kid);
+        claim_I1(I, Secret, kid);
+        claim_I1(I, Secret, Ni);
+        claim_I2(I, Niagree);
+        claim_I3(I, Nisynch);
+        claim_I4(I, Alive);
+        claim_I5(I, Weakagree);
+}
+
+    role R {
+        var kid: KeyID;
+        var Ni: Nonce;
+        var K: SessionKey;
+        var piid: ProtocolID;
+        var mid: MessageID;
+
+        recv_1(I,R, piid, mid, {mid, piid, kid, Ni, K}pk(R),
+                    {{mid, piid, kid, Ni, K}pk(R)}sk(I));
+
+        send_2(R, I, piid, mid, {mid, piid, Ni}K(I, R));
+
+
+        claim_R1(R, Secret, kid);
+        claim_R1(R, Secret, kid);
+        claim_R1(R, Secret, Ni);
+        claim_R2(R, Niagree);
+        claim_R3(R, Nisynch);
+        claim_R4(R, Alive);
+        claim_R5(R, Weakagree);
+
+    }
+}
+
+
+protocol Proto-STK(I,R) {
+    role I {
+        fresh kid: KeyID;
+        fresh Ni: Nonce;
+        fresh K: SessionKey;
+        var Nr: Nonce;
+        fresh pid: ProtocolID;
+        fresh mid: MessageID;
+
+        send_1(I,R, pid, mid, {mid, pid, kid, Ni, K}k(R, I),
+               {{mid, pid, kid, Ni, K}k(R, I)}sk(I));
+        recv_2(R, I, pid, mid, {mid, pid, Nr, K}K(I, R));
+
+
+        claim_I1(I, Secret, kid);
+        claim_I1(I, Secret, kid);
+        claim_I1(I, Secret, Ni);
+        claim_I1(I, Secret, K);
+        claim_I2(I, Niagree);
+        claim_I3(I, Nisynch);
+        claim_I4(I, Alive);
+        claim_I5(I, Weakagree);
+}
+
+    role R {
+        var kid: KeyID;
+        var Ni: Nonce;
+        var K: SessionKey;
+        var pid: ProtocolID;
+        var mid: MessageID;
+        fresh Nr: Nonce;
+
+        recv_1(I,R, pid, mid, {mid, pid, kid, Ni, K}k(R, I),
+        {{mid, pid, kid, Ni, K}k(R, I)}sk(I));
+        send_2(R, I, pid, mid, {mid, pid, Nr, K}K(I, R));
+
+
+        claim_R1(R, Secret, kid);
+        claim_R1(R, Secret, kid);
+        claim_R1(R, Secret, Ni);
+        claim_R1(R, Secret, K);
+        claim_R2(R, Niagree);
+        claim_R3(R, Nisynch);
+        claim_R4(R, Alive);
+        claim_R5(R, Weakagree);
+    }
+}
+
+
+protocol MixCAN(I,R) {
+
+    role I {
+
+        fresh sentFrames: FrameSet;
+        fresh sentCounter: Nonce;
+        fresh id: ProtocolId;
+        fresh mid: MessageID;
+        var recvCounter: Nonce;
+
+        send_0(I, R, sentFrames);
+        send_1(I, R, id, mid, EBF(sentFrames, sentCounter, k(I, R)), {id, mid, EBF(sentFrames, sentCounter, id, k(I, R))}k(I, R));
+        recv_2(R, I, id, mid, {H(mid, recvCounter, id)}k(R, I));
+
+
+        claim_I1(I, Secret, sentCounter);
+        claim_I1(I, Secret, recvCounter);
+        claim_I2(I, Niagree);
+        claim_I3(I, Nisynch);
+        claim_I4(I, Alive);
+        claim_I5(I, Weakagree);
+    }
+
+    role R {
+        var recvFrames: FrameSet;
+        var recvCounter: Nonce;
+        var id: ProtocolId;
+        var mid: MessageID;
+        fresh incrmntNonce: Nonce;
+
+        recv_0(I, R, recvFrames);
+        recv_1(I, R, id, mid, EBF(recvFrames, recvCounter, k(I, R)), {id, mid, EBF(recvFrames, recvCounter, id, k(I, R))}k(I, R));
+        send_2(R, I, id, mid, {H(mid, incrmntNonce, id)}k(R, I));
+
+
+        claim_R1(R, Secret, incrmntNonce);
+        claim_R1(R, Secret, recvCounter);
+        claim_R2(R, Niagree);
+        claim_R3(R, Nisynch);
+        claim_R4(R, Alive);
+        claim_R5(R, Weakagree);
+
+    }
+}
+
+protocol Proto-STK-Synch(I,R) {
+    role I {
+        var kid: KeyID;
+        fresh pid: ProtocolID;
+        fresh N: Nonce;
+        fresh ptype: ProtocolType;
+        fresh miid: MessageID;
+        var K: SessionKey;
+        var Ninc: Nonce;
+        var miiid: Nonce;
+
+        send_1(I, R, pid, miid, {miid, pid, ptype, N}pk(R), {{miid, pid, ptype, N}pk(R)}sk(I));
+
+        recv_2(R, I, pid, miiid, {miiid, pid, ptype, kid, Ninc, K}pk(I), 
+                    {{miiid, pid, ptype, kid, Ninc, K}pk(I)}sk(R));
+        send_3(I, R, pid, miiid, {H(miiid, pid, kid, N)}K(I, R));
+
+
+        claim_I1(I, Secret, kid);
+        claim_I1(I, Secret, N);
+        claim(I, Secret, Ninc);
+        claim_I1(I, Secret, K);
+        claim_I2(I, Niagree);
+        claim_I3(I, Nisynch);
+        claim_I4(I, Alive);
+        claim_I5(I, Weakagree);
+
+}
+
+    role R {
+        fresh kid: KeyID;
+        var ptype: ProtocolType;
+        var pid: ProtocolID;
+        var N: Nonce;
+        fresh Ninc: Nonce;
+        var miid: MessageID;
+        fresh K: SessionKey;
+
+        fresh miiid: Nonce;
+
+        recv_1(I, R, pid, miid, {miid, pid, ptype, N}pk(R), {{miid, pid, ptype, N}pk(R)}sk(I));
+
+        send_2(R, I, pid, miiid, {miiid, pid, ptype, kid, Ninc, K}pk(I), 
+                    {{miiid, pid, ptype, kid, Ninc, K}pk(I)}sk(R));
+        recv_3(I, R, pid, miiid, {H(miiid, pid, kid, N)}K(I, R));
+
+
+        claim_R1(R, Secret, kid);
+        claim_R1(R, Secret, kid);
+        claim_R1(R, Secret, N);
+        claim(R, Secret, Ninc);
+        claim_R1(R, Secret, K);
+        claim_R2(R, Niagree);
+        claim_R3(R, Nisynch);
+        claim_R4(R, Alive);
+        claim_R5(R, Weakagree);
+    }
+}
